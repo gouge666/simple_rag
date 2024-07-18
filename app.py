@@ -2,7 +2,7 @@ from flask import Flask, request
 import time
 import os
 from flask import stream_with_context
-from db_operation import create_chroma_db as create_db, answer_user_query
+from db_operation import create_chroma_db as create_db, answer_user_query,delete_chroma_db as delete_db,get_all_segments as get_all,delete_segments_by_id,update_segments_by_id,add_new_segments
 
 app = Flask(__name__)
 
@@ -43,7 +43,7 @@ def create_chroma_db():
 @app.route("/knowledge_list", methods=['GET'])
 def knowledge_list():
     #  指定目录路径
-    directory_path = 'dbs'
+    directory_path = 'can_get_dbs'
 
     #  获取目录下的所有文件和文件夹
     entries = os.listdir(directory_path)
@@ -56,8 +56,6 @@ def knowledge_list():
 
 @app.route("/query", methods=['POST'])
 def query():
-    print(request.data)
-    print(request.form)
     db_name = request.form['db_name']
     question = request.form['question']
 
@@ -67,7 +65,43 @@ def query():
 
     return stream_with_context(generate_chunks())
 
+@app.route("/delete_chroma_db",methods=['POST'])
+def delete_chroma_db():
+    db_name = request.form['db_name']
+    return delete_db(db_name)
 
+@app.route("/get_all_segments",methods=['POST'])
+def get_all_segments():
+    print(request.form)
+    db_name = request.form['db_name']
+    print(db_name)
+    return get_all(db_name)
+
+@app.route("/delete_segments_by_id",methods=['POST'])
+def _delete_segments_by_id():
+    db_name = request.form['db_name']
+    id = request.form['id']
+    print(id)
+    delete_segments_by_id(db_name, id)
+    return "ok"
+
+@app.route("/update_segments_by_id",methods=['POST'])
+def _update_segments_by_id():
+    db_name = request.form['db_name']
+    id = request.form['id']
+    new_content = request.form['new_content']
+    metedata_source = request.form['metedata_source']
+
+    return update_segments_by_id(db_name,id,new_content,metedata_source)
+
+@app.route("/add_new_segments",methods=['POST'])
+def _add_new_segments():
+    db_name = request.form['db_name']
+    new_content = request.form['new_content']
+    metedata_source = request.form['metedata_source']
+
+
+    return add_new_segments(db_name,new_content,metedata_source)
 
 # 启动一个本地开发服务器，激活该网页
 

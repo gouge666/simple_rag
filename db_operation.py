@@ -1,6 +1,11 @@
+import ctypes
+import errno
 import os
+import shutil
+import subprocess
 
 from my_llm import llm
+from langchain_core.documents import Document
 from langchain_community.document_loaders import TextLoader,PyPDFium2Loader,CSVLoader,Docx2txtLoader
 from langchain_community.vectorstores import Chroma
 from langchain_core.prompts import ChatPromptTemplate
@@ -14,6 +19,7 @@ embeddings = HuggingFaceEmbeddings(
 
 def create_chroma_db(db_name, temp_source_file_path):
     persist_directory = "./dbs/" + db_name
+    os.mkdir("./can_get_dbs/" + db_name)
     # 获取文件扩展名以决定使用哪一个Loader
     extension = temp_source_file_path.split(".")[-1]
     loader = None
@@ -56,3 +62,43 @@ def answer_user_query(db_name, question):
     return llm.stream(prompt_template.invoke(
         {"context": format_docs(retriever.invoke(question)), "question": question}
     ).to_messages())
+
+
+def delete_chroma_db(db_name):
+    persist_directory = "./can_get_dbs/" + db_name
+
+    try:
+        if os.path.exists(persist_directory):
+            shutil.rmtree(persist_directory, ignore_errors=True)
+            print(f"成功强制删除目录:  {persist_directory}")
+        else:
+            print(f"目录  {persist_directory}  不存在")
+    except  Exception as e:
+        print(f"强制删除目录时出错:  {e}")
+
+
+    return "ok"
+
+
+def get_all_segments(db_name):
+    persist_directory = "./dbs/" + db_name
+    vectorstore = Chroma(embedding_function=embeddings, persist_directory=persist_directory)
+    res = vectorstore.get()
+    return res
+
+def delete_segments_by_id(db_name,id):
+    persist_directory = "./dbs/" + db_name
+    vectorstore = Chroma(embedding_function=embeddings, persist_directory=persist_directory)
+    print(vectorstore.delete(ids=[id]))
+    return "ok"
+
+def update_segments_by_id(db_name,id,new_content,metedata_source):
+    persist_directory = "./dbs/" + db_name
+    vectorstore = Chroma(embedding_function=embeddings, persist_directory=persist_directory)
+    print(vectorstore.update_document(document_id=id,document=Document(page_content=new_content,metadata={"source": metedata_source})))
+    return "ok"
+
+def add_new_segments(db_name,new_content,metedata_source):
+    persist_directory = "./dbs/" + db_name
+    vectorstore = Chroma(embedding_function=embeddings, persist_directory=persist_directory)
+    return vectorstore.add_documents(documents=[Document(page_content=new_content,metadata={"source": metedata_source})])

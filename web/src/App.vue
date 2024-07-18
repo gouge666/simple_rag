@@ -27,6 +27,11 @@
             {{ item }}
           </option>
         </select>
+        <!-- 管理按钮 -->
+        <button v-if="is_chatting_page" @click="is_chatting_page = false">
+          管理
+        </button>
+        <button v-else @click="is_chatting_page = true">返回</button>
       </div>
 
       <!-- 创建知识库的部分 -->
@@ -56,7 +61,7 @@
       </div>
     </div>
     <!-- 右侧内容区域 -->
-    <div class="right-content">
+    <div class="right-content" v-show="is_chatting_page">
       <!-- 聊天历史记录部分 -->
       <div class="chat-history">
         <!-- 通过 v-for 循环展示每条聊天记录 -->
@@ -143,36 +148,77 @@
         </button>
       </div>
     </div>
+    <div class="right-content" v-show="!is_chatting_page">
+      <div class="delete-container">
+        <button @click="deleteKnowledge" class="delete-btn">删除</button>
+      </div>
+      <div class="segment-list">
+        <div
+          v-for="(item, index) in all_segments_data.documents"
+          :key="index"
+          class="segment-item"
+        >
+          <div class="item-index">
+            知识片段id:{{ all_segments_data.ids[index] }}
+          </div>
+          <div class="item-content">
+            <textarea
+              v-model="editedItems[index]"
+              @blur="saveEdit(index)"
+              class="edit-textarea"
+              >{{ item }}</textarea
+            >
+          </div>
+          <div class="action-buttons">
+            <button @click="deleteSegment(index)" class="delete-segment-btn">
+              删除
+            </button>
+            <button @click="saveSegment(index)" class="save-segment-btn">
+              保存
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="add-new-container">
+        <textarea
+          v-model="newKnowledge"
+          placeholder="输入新知识"
+          class="add-textarea"
+        ></textarea>
+        <button @click="add_new_segments" class="add-btn">添加</button>
+      </div>
+    </div>
   </div>
 </template>
 
 <style scoped>
 /* 页面主体的字体设置 */
 body {
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-family: "Roboto", sans-serif;
+  background-color: #f8f9fa;
 }
 
 /* 滚动条样式 */
 ::-webkit-scrollbar {
-  width: 10px;
+  width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f5f5f5;
+  background: #e9ecef;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #888;
-  border-radius: 5px;
+  background: #868e96;
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: #6c757d;
 }
 
 /* 选择知识库部分的样式 */
 .select-knowledge {
-  margin-bottom: 25px;
+  margin-bottom: 30px;
 }
 
 .select-knowledge:hover {
@@ -180,7 +226,7 @@ body {
 }
 
 .select-knowledge option:hover {
-  background-color: #ddd;
+  background-color: #dee2e6;
 }
 
 /* 整个页面容器的样式 */
@@ -188,104 +234,105 @@ body {
   display: flex;
   height: 100vh;
   width: 100vw;
-  background-color: #fafafa;
 }
 
 /* 左侧侧边栏的样式 */
 .left-sidebar {
   width: 300px;
-  background-color: #e8e8e8;
-  padding: 25px;
+  background-color: #f1f3f5;
+  padding: 30px;
 
   label {
-    font-size: 18px;
-    font-weight: bold;
-    margin-bottom: 15px;
-    color: #555;
+    font-size: 20px;
+    font-weight: 500;
+    margin-bottom: 20px;
+    color: #343a40;
   }
 
   select {
     width: 100%;
-    padding: 12px;
-    font-size: 16px;
-    border-radius: 8px;
-    border: 2px solid #ccc;
+    padding: 15px;
+    font-size: 18px;
+    border-radius: 10px;
+    border: 2px solid #adb5bd;
     background-color: #fff;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 25px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   }
 
   .create-knowledge h3 {
-    font-size: 22px;
-    margin-top: 25px;
-    color: #555;
+    font-size: 24px;
+    margin-top: 30px;
+    color: #343a40;
   }
 
   input[type="text"] {
     width: 100%;
-    padding: 12px;
-    font-size: 16px;
-    border-radius: 8px;
-    border: 2px solid #ccc;
+    padding: 15px;
+    font-size: 18px;
+    border-radius: 10px;
+    border: 2px solid #adb5bd;
     background-color: #fff;
-    margin-top: 15px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   }
 
   input[type="file"] {
-    margin-top: 15px;
+    margin-top: 20px;
   }
 
   button {
     width: 100%;
-    padding: 15px;
-    font-size: 18px;
+    padding: 20px;
+    font-size: 20px;
     color: #fff;
     background: linear-gradient(to bottom right, #4caf50, #388e3c);
     border: none;
-    border-radius: 8px;
+    border-radius: 10px;
     cursor: pointer;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    margin-top: 25px;
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
+    margin-top: 30px;
   }
 }
 
 /* 右侧内容区域的样式 */
 .right-content {
   flex: 1;
-  padding: 25px;
-  background-color: #fafafa;
+  padding: 30px;
+  background-color: #fff;
+  display: flex;
+  flex-direction: column;
 
   .chat-history {
-    height: calc(100vh - 150px);
+    height: calc(100vh - 180px);
     overflow-y: auto;
-    background-color: #fff;
-    margin-bottom: 40px;
+    background-color: #f8f9fa;
+    margin-bottom: 50px;
 
     .chat-item {
-      margin-bottom: 25px;
-      padding: 0 25px;
+      margin-bottom: 30px;
+      padding: 0 30px;
 
       .robot-message {
         .message-content {
-          background-color: #f0f0f0;
-          padding: 25px;
-          border-radius: 15px;
-          font-size: 18px;
+          background-color: #e9ecef;
+          padding: 30px;
+          border-radius: 20px;
+          font-size: 20px;
           display: inline-block;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
       }
 
       .user-message {
         text-align: right;
         .message-content {
-          background-color: #90ee90;
-          padding: 25px;
-          border-radius: 15px;
-          font-size: 18px;
+          background-color: #86c232;
+          padding: 30px;
+          border-radius: 20px;
+          font-size: 20px;
           display: inline-block;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
       }
     }
@@ -296,32 +343,144 @@ body {
 
     textarea {
       flex: 1;
-      padding: 20px;
-      font-size: 18px;
-      border-radius: 15px;
-      border: 3px solid #4caf50;
-      box-shadow: 0 2px 4px rgba(76, 175, 80, 0.5);
+      padding: 25px;
+      font-size: 20px;
+      border-radius: 20px;
+      border: 4px solid #4caf50;
+      box-shadow: 0 4px 6px rgba(76, 175, 80, 0.5);
       resize: none;
     }
 
     button {
-      padding: 20px 40px;
-      font-size: 18px;
+      padding: 25px 50px;
+      font-size: 20px;
       color: #fff;
       background: linear-gradient(to bottom right, #4caf50, #388e3c);
       border: none;
-      border-radius: 15px;
+      border-radius: 20px;
       cursor: pointer;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
     }
+  }
+
+  .right-content h2 {
+    font-size: 28px;
+    margin-bottom: 30px;
+    color: #343a40;
+  }
+
+  .delete-container {
+    margin-bottom: 30px;
+  }
+
+  .delete-btn {
+    padding: 10px 20px;
+    width: 150px;
+    height: 40px;
+    background-color: #dc3545;
+    color: #fff;
+    border-radius: 10px;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  }
+
+  .segment-list {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    height: calc(100vh - 180px);
+    overflow: hidden;
+    overflow-y: auto;
+  }
+
+  .segment-item {
+    padding: 25px;
+    border-bottom: 1px solid #dee2e6;
+  }
+
+  .item-index {
+    font-weight: 500;
+    margin-right: 20px;
+    color: #343a40;
+  }
+
+  .item-content {
+    padding-left: 20px;
+  }
+
+  .edit-textarea {
+    width: 100%;
+    height: 150px;
+    resize: vertical;
+    padding: 15px;
+    font-size: 18px;
+    border-radius: 10px;
+    border: 2px solid #adb5bd;
+    background-color: #fff;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  .action-buttons {
+    margin-top: 15px;
+  }
+
+  .delete-segment-btn,
+  .save-segment-btn {
+    padding: 10px 20px;
+    margin-right: 15px;
+    border-radius: 10px;
+    font-size: 18px;
+    cursor: pointer;
+  }
+
+  .delete-segment-btn {
+    background-color: #dc3545;
+    color: #fff;
+  }
+
+  .save-segment-btn {
+    background-color: #28a745;
+    color: #fff;
+  }
+
+  .add-new-container {
+    display: flex;
+    height: 60px;
+    margin-top: 30px;
+  }
+
+  .add-textarea {
+    width: 100%;
+    height: 60px;
+    resize: vertical;
+    padding: 15px;
+    font-size: 18px;
+    border-radius: 10px;
+    border: 2px solid #adb5bd;
+    background-color: #fff;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  .add-btn {
+    width: 100px;
+    background-color: #17a2b8;
+    color: #fff;
+    border-radius: 10px;
+    cursor: pointer;
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
   }
 }
 </style>
 
 <script setup>
 // 导入 Vue 相关的模块
-import { ref, onMounted } from "vue";
+import { ref, onMounted, watch } from "vue";
 
+const is_chatting_page = ref(true);
 // 在页面挂载时执行的函数
 onMounted(() => {
   // 发送获取知识库列表的请求
@@ -466,10 +625,143 @@ const createKnowledge = () => {
         // 将响应数据转换为 JSON 格式，并更新 knowledgeList 数据
         response.json().then((data) => {
           knowledgeList.value = data;
+        });
+      });
+    });
+  }
+};
+
+// 删除知识库的方法，需要用户确认
+const deleteKnowledge = () => {
+  // 弹出确认删除的提示
+  if (confirm("确定要删除该知识库吗？")) {
+    // 创建表单数据对象
+    var formData = new FormData();
+    // 向表单数据中添加数据
+    formData.append("db_name", db_name.value);
+
+    // 发送删除知识库的请求
+    fetch("/api/delete_chroma_db", {
+      method: "POST",
+      body: formData,
+    }).then((response) => {
+      // 如果响应不成功，抛出错误
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+      // 弹出删除成功的提示
+      alert("删除成功");
+      // 更新知识库列表
+      fetch("/api/knowledge_list", { method: "GET" }).then((response) => {
+        // 如果响应不成功，抛出错误
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+        is_chatting_page.value = true;
+        // 将响应数据转换为 JSON 格式，并更新 knowledgeList 数据
+        response.json().then((data) => {
+          knowledgeList.value = data;
           db_name.value = data[0];
         });
       });
     });
   }
 };
+
+const all_segments_data = ref({
+  documents: [],
+});
+// 初始化一个新的数组来存储编辑的值
+const editedItems = ref([]);
+
+// 编辑和保存的相关方法
+const saveEdit = (index) => {
+  all_segments_data.value.documents[index] = editedItems.value[index];
+};
+
+const saveSegment = (index) => {
+  var formData = new FormData();
+  // 向表单数据中添加数据
+  formData.append("db_name", db_name.value);
+  formData.append("id", all_segments_data.value.ids[index]);
+  formData.append("new_content", editedItems.value[index]);
+  formData.append(
+    "metedata_source",
+    all_segments_data.value.metadatas[index].source
+  );
+  fetch("/api/update_segments_by_id", {
+    method: "POST",
+    body: formData,
+  }).then((response) => {
+    if (!response.ok) {
+      throw new Error("Network response was not ok");
+    }
+    // 提示保存成功
+    alert("保存成功");
+  });
+};
+
+const deleteSegment = (index) => {
+  if (confirm("确定要删除该片段吗？")) {
+    var formData = new FormData();
+    // 向表单数据中添加数据
+    formData.append("db_name", db_name.value);
+    formData.append("id", all_segments_data.value.ids[index]);
+    fetch("/api/delete_segments_by_id", {
+      method: "POST",
+      body: formData,
+    }).then((response) => {
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+      // 提示删除成功
+      alert("删除成功");
+      get_all_fragments();
+    });
+  }
+};
+const newKnowledge = ref("");
+
+const add_new_segments = () => {
+  var formData = new FormData();
+  // 向表单数据中添加数据
+  formData.append("db_name", db_name.value);
+  formData.append("new_content", newKnowledge.value);
+  formData.append("metedata_source", "手动添加");
+  fetch("/api/add_new_segments", {
+    method: "POST",
+    body: formData,
+  }).then((response) => {
+    if (!response.ok) {
+      throw new Error("Network response was not ok");
+    }
+    newKnowledge.value = "";
+    // 提示保存成功
+    alert("保存成功");
+    get_all_fragments();
+  });
+};
+// 获取全部片段
+const get_all_fragments = () => {
+  var formData = new FormData();
+  // 向表单数据中添加数据
+  formData.append("db_name", db_name.value);
+  fetch("/api/get_all_segments", {
+    method: "POST",
+    body: formData,
+  }).then((response) => {
+    if (!response.ok) {
+      throw new Error("Network response was not ok");
+    }
+    response.json().then((data) => {
+      console.log(data);
+      all_segments_data.value = data;
+      editedItems.value = data.documents.map((item) => item);
+    });
+  });
+};
+watch(db_name, () => {
+  console.log(db_name.value);
+  get_all_fragments();
+});
 </script>
