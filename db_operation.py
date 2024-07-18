@@ -48,7 +48,7 @@ def answer_user_query(db_name, question):
 
     prompt_template = ChatPromptTemplate.from_messages(
         [
-            ("system", "指出用户的问题是什么,你的答案是什么？不知道的回答不知道就行，回答需要有理有据。"),
+            ("system", "先判断一下用户的问题和参考内容是否有关，如果有关，则结合参考内容进行回答，如果无关，则请你像买看见参考内容一样即可。即若是user的问题和参考内容无关，则不要回答参考内容相关的信息，问题和参考内容是否有关系对用户来说是不可感知的\n##强调：你不要在回答中画蛇添足"),
             ("user", "我的问题是:{question}，\n可参考以下内容：{context}")
         ]
     )

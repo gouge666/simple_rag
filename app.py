@@ -6,10 +6,6 @@ from db_operation import create_chroma_db as create_db, answer_user_query
 
 app = Flask(__name__)
 
-@app.route("/", methods=['GET', 'POST'])
-def index():
-    return "Hello World!"
-
 def ensure_dir(f):
 
     """确保目录存在"""
@@ -43,11 +39,26 @@ def create_chroma_db():
 
     return create_db(db_name, filepath)
 
+
+@app.route("/knowledge_list", methods=['GET'])
+def knowledge_list():
+    #  指定目录路径
+    directory_path = 'dbs'
+
+    #  获取目录下的所有文件和文件夹
+    entries = os.listdir(directory_path)
+
+    #  过滤出文件夹
+    subdirectories = [d for d in entries if os.path.isdir(os.path.join(directory_path, d))]
+
+    #  返回子目录的名称列表
+    return subdirectories
+
 @app.route("/query", methods=['POST'])
 def query():
-
+    print(request.data)
+    print(request.form)
     db_name = request.form['db_name']
-
     question = request.form['question']
 
     def generate_chunks():
